@@ -21,13 +21,13 @@ parser.add_argument('--save_freq', default=0, type=int)
 args = parser.parse_args()
 
 tf_train = Transform2D(crop=(512, 512), p_flip=0.5, color_jitter_params=(0.1, 0.1, 0.1, 0.1),
-                       p_random_affine=0.5, long_mask=True)
-tf_val = Transform2D(crop=(512, 512), p_flip=0, color_jitter_params=None, long_mask=True)
+                       p_random_affine=0.5, long_mask=False)
+tf_val = Transform2D(crop=(512, 512), p_flip=0, color_jitter_params=None, long_mask=False)
 train_dataset = ImageToImage2D(args.train_dataset, tf_val)
 val_dataset = ImageToImage2D(args.val_dataset, tf_val)
 
-unet = UNet2D(3, 3, [10, 20, 30, 40])
-loss = nn.CrossEntropyLoss()
+unet = UNet2D(1, 1, [10, 20, 30, 40])
+loss = nn.BCELoss()
 optimizer = optim.Adam(unet.parameters(), lr=1e-3)
 
 model_name = '2019-01-18-test'
