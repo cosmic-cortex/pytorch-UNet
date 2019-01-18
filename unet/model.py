@@ -71,7 +71,7 @@ class Model:
                 training_loss.backward()
                 self.optimizer.step()
 
-            epoch_running_loss += training_loss.item() / n_batch
+            epoch_running_loss += training_loss.item()
 
         self.net.train(False)
 
