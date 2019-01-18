@@ -4,7 +4,7 @@ import torch
 
 from skimage import io
 
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import Dataset
 from torchvision import transforms as T
 from torchvision.transforms import functional as F
 
@@ -70,11 +70,11 @@ class ImageToImage2D(Dataset):
     Structure of the dataset should be:
 
     dataset_path
-      |-- input
+      |-- images
           |-- img001.png
           |-- img002.png
           |-- ...
-      |-- output
+      |-- masks
           |-- img001.png
           |-- img002.png
           |-- ...
@@ -83,8 +83,8 @@ class ImageToImage2D(Dataset):
 
     def __init__(self, dataset_path: str, joint_transform: Callable = None, one_hot_mask: int = False) -> None:
         self.dataset_path = dataset_path
-        self.input_path = os.path.join(dataset_path, 'input')
-        self.output_path = os.path.join(dataset_path, 'output')
+        self.input_path = os.path.join(dataset_path, 'images')
+        self.output_path = os.path.join(dataset_path, 'masks')
         self.images_list = os.listdir(self.input_path)
 
         self.joint_transform = joint_transform
@@ -97,9 +97,9 @@ class ImageToImage2D(Dataset):
         image_filename = self.images_list[idx]
         img_in = io.imread(os.path.join(self.input_path, image_filename))
 
-        # read output image in training mode
+        # read mask image
         img_out = io.imread(os.path.join(self.output_path, image_filename))
-        # TODO: rewrite this such that adding dimensions is optional
+
         if len(img_out.shape) == 2:
             img_out = np.expand_dims(img_out, axis=2)
 

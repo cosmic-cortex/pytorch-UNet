@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader, Dataset
 
 from skimage import io
 
-from utils import chk_mkdir, Logger
+from .utils import chk_mkdir, Logger
 
 
 class Model:

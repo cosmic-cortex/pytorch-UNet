@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from blocks import *
+from .blocks import *
 
 
 class UNet2D(nn.Module):
