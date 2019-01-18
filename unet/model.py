@@ -76,7 +76,7 @@ class Model:
         return epoch_running_loss / n_batch
 
     def fit_dataset(self, dataset: Dataset, n_epochs: int, n_batch: int = 1, shuffle: bool = False,
-                    validation_dataset: Dataset = None, save_freq: int = 100, verbose: bool = False):
+                    val_dataset: Dataset = None, save_freq: int = 100, verbose: bool = False):
 
         logger = Logger(verbose=verbose)
 
@@ -94,8 +94,8 @@ class Model:
             if self.scheduler is not None:
                 self.scheduler.step(train_loss)
 
-            if validation_dataset is not None:
-                val_loss = self.validate_dataset(validation_dataset, n_batch=n_batch)
+            if val_dataset is not None:
+                val_loss = self.validate_dataset(val_dataset, n_batch=n_batch)
                 logs['val_loss'] = val_loss
                 if val_loss < min_loss:
                     torch.save(self.net.state_dict(), os.path.join(self.checkpoint_folder, 'model'))
@@ -106,9 +106,9 @@ class Model:
                     min_loss = train_loss
 
             # recording the losses in the logger
-            logger.after_epoch(logs)
+            logger.log(logs)
             # saving model and logs
-            if epoch_idx % save_freq == 0:
+            if save_freq and (epoch_idx % save_freq == 0):
                 epoch_save_path = os.path.join(self.checkpoint_folder, '%d' % epoch_idx)
                 chk_mkdir(epoch_save_path)
                 torch.save(self.net.state_dict(), os.path.join(epoch_save_path, 'model'))

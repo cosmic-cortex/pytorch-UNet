@@ -21,7 +21,7 @@ class Logger:
         self.logs = defaultdict(list)
         self.verbose = verbose
 
-    def record_logs(self, logs):
+    def log(self, logs):
         for key, value in logs.items():
             self.logs[key].append(value)
 

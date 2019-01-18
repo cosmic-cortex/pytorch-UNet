@@ -30,39 +30,38 @@ class Transform2D:
         self.normalize = normalize
         self.long_mask = long_mask
 
-    def __call__(self, input, output):
+    def __call__(self, image, mask):
         # transforming to PIL image
-        input, output = F.to_pil_image(input), F.to_pil_image(output)
+        image, mask = F.to_pil_image(image), F.to_pil_image(mask)
 
         # random crop
         if self.crop:
-            i, j, h, w = T.RandomCrop.get_params(input, self.crop)
-            input, output = F.crop(input, i, j, h, w), F.crop(output, i, j, h, w)
+            i, j, h, w = T.RandomCrop.get_params(image, self.crop)
+            image, mask = F.crop(image, i, j, h, w), F.crop(mask, i, j, h, w)
             if np.random.rand() < self.p_flip:
-                input, output = F.hflip(input), F.hflip(output)
+                image, mask = F.hflip(image), F.hflip(mask)
 
         # color transforms || ONLY ON IMAGE
         if self.color_jitter_params:
-            input = self.color_tf(input)
+            image = self.color_tf(image)
 
         # random affine transform
         if np.random.rand() < self.p_random_affine:
-            affine_params = T.RandomAffine(180).get_params((-90, 90), (1, 1), (2, 2), (-45, 45), crop)
+            affine_params = T.RandomAffine(180).get_params((-90, 90), (1, 1), (2, 2), (-45, 45), self.crop)
             image, mask = F.affine(image, *affine_params), F.affine(mask, *affine_params)
 
-
         # transforming to tensor
-        input = F.to_tensor(input)
+        image = F.to_tensor(image)
         if not self.long_mask:
-            output = F.to_tensor(output)
+            mask = F.to_tensor(mask)
         else:
-            output = to_long_tensor(output)
+            mask = to_long_tensor(mask)
 
         # normalizing image
         if self.normalize:
-            input = tf_normalize(input)
+            image = tf_normalize(image)
 
-        return input, output
+        return image, mask
 
 
 class ImageToImage2D(Dataset):
@@ -95,22 +94,21 @@ class ImageToImage2D(Dataset):
 
     def __getitem__(self, idx):
         image_filename = self.images_list[idx]
-        img_in = io.imread(os.path.join(self.input_path, image_filename))
+        image = io.imread(os.path.join(self.input_path, image_filename))
 
         # read mask image
-        img_out = io.imread(os.path.join(self.output_path, image_filename))
-
-        if len(img_out.shape) == 2:
-            img_out = np.expand_dims(img_out, axis=2)
+        mask = io.imread(os.path.join(self.output_path, image_filename))
+        if len(mask.shape) == 2:
+            mask = np.expand_dims(mask, axis=2)
 
         if self.joint_transform:
-            img_in, img_out = self.joint_transform(img_in, img_out)
+            image, mask = self.joint_transform(image, mask)
 
         if self.one_hot_mask:
             assert self.one_hot_mask > 0, 'one_hot_mask must be nonnegative'
-            img_out = torch.zeros((self.one_hot_mask, img_out.shape[1], img_out.shape[2])).scatter_(0, img_out.long(), 1)
+            mask = torch.zeros((self.one_hot_mask, mask.shape[1], mask.shape[2])).scatter_(0, mask.long(), 1)
 
-        return img_in, img_out, image_filename
+        return image, mask, image_filename
 
 
 class Image2D(Dataset):
