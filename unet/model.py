@@ -9,6 +9,8 @@ from torch.utils.data import DataLoader, Dataset
 
 from skimage import io
 
+from time import time
+
 from .utils import chk_mkdir, Logger
 
 
@@ -84,7 +86,12 @@ class Model:
 
         logger = Logger(verbose=verbose)
 
+        # setting the current best loss to np.inf
         min_loss = np.inf
+
+        # measuring the time elapsed
+        start = time()
+
         for epoch_idx in range(1, n_epochs + 1):
             # doing the epoch
             train_loss = self.fit_epoch(dataset, n_batch=n_batch, shuffle=shuffle, train=True)
@@ -106,6 +113,10 @@ class Model:
                 if train_loss < min_loss:
                     torch.save(self.net.state_dict(), os.path.join(self.checkpoint_folder, 'model'))
                     min_loss = train_loss
+
+            # measuring time
+            epoch_end = time()
+            logs['time'] = epoch_end - start
 
             # recording the losses in the logger
             logger.log(logs)
