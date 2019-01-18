@@ -18,6 +18,15 @@ def to_long_tensor(pic):
     return img.long()
 
 
+def correct_dims(*images):
+    corr_images = []
+    for img in images:
+        if len(img.shape) == 2:
+            corr_images.append(np.expand_dims(img, axis=2))
+
+    return corr_images
+
+
 class Transform2D:
     def __init__(self, crop=(256, 256), p_flip=0.5, color_jitter_params=(0.1, 0.1, 0.1, 0.1),
                  p_random_affine=0, normalize=False, long_mask=False):
@@ -94,12 +103,15 @@ class ImageToImage2D(Dataset):
 
     def __getitem__(self, idx):
         image_filename = self.images_list[idx]
+        # read image
         image = io.imread(os.path.join(self.input_path, image_filename))
-
         # read mask image
         mask = io.imread(os.path.join(self.output_path, image_filename))
-        if len(mask.shape) == 2:
-            mask = np.expand_dims(mask, axis=2)
+
+        # correct dimensions if needed
+        # if len(mask.shape) == 2:
+        #     mask = np.expand_dims(mask, axis=2)
+        image, mask = correct_dims(image, mask)
 
         if self.joint_transform:
             image, mask = self.joint_transform(image, mask)
