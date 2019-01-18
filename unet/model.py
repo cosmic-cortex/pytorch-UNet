@@ -50,42 +50,44 @@ class Model:
         self.net.to(device=self.device)
         self.loss.to(device=self.device)
 
-    def fit_batch(self, X_batch, y_batch):
-        self.net.train(True)
+    def fit_epoch(self, dataset, n_batch=1, shuffle=False, train=True):
+        self.net.train(train)
 
-        X_batch = Variable(X_batch.to(device=self.device))
-        y_batch = Variable(y_batch.to(device=self.device))
-
-        # training
-        self.optimizer.zero_grad()
-        y_out = self.net(X_batch)
-        training_loss = self.loss(y_out, y_batch)
-        training_loss.backward()
-        self.optimizer.step()
-
-        # return the average training loss
-        return training_loss.item() / len(X_batch)
-
-    def fit_epoch(self, dataset, n_batch=1, shuffle=False):
         epoch_running_loss = 0
-        for X_batch, y_batch, *rest in DataLoader(dataset, batch_size=n_batch, shuffle=shuffle):
-            epoch_running_loss += self.fit_batch(X_batch, y_batch)
+
+        for batch_idx, (X_batch, y_batch, *rest) in enumerate(DataLoader(dataset, batch_size=n_batch, shuffle=shuffle)):
+
+            X_batch = Variable(X_batch.to(device=self.device))
+            y_batch = Variable(y_batch.to(device=self.device))
+
+            # training
+            if train:
+                self.optimizer.zero_grad()
+
+            y_out = self.net(X_batch)
+            training_loss = self.loss(y_out, y_batch)
+
+            if train:
+                training_loss.backward()
+                self.optimizer.step()
+
+            epoch_running_loss += training_loss.item() / n_batch
+
+        self.net.train(False)
 
         del X_batch, y_batch
 
-        return epoch_running_loss / n_batch
+        return epoch_running_loss / (batch_idx + 1)
 
     def fit_dataset(self, dataset: Dataset, n_epochs: int, n_batch: int = 1, shuffle: bool = False,
                     val_dataset: Dataset = None, save_freq: int = 100, verbose: bool = False):
 
         logger = Logger(verbose=verbose)
 
-        self.net.train(True)
-
         min_loss = np.inf
         for epoch_idx in range(1, n_epochs + 1):
             # doing the epoch
-            train_loss = self.fit_epoch(dataset, n_batch=n_batch, shuffle=shuffle)
+            train_loss = self.fit_epoch(dataset, n_batch=n_batch, shuffle=shuffle, train=True)
 
             # logging the losses
             logs = {'epoch': epoch_idx,
@@ -95,7 +97,7 @@ class Model:
                 self.scheduler.step(train_loss)
 
             if val_dataset is not None:
-                val_loss = self.validate_dataset(val_dataset, n_batch=n_batch)
+                val_loss = self.fit_epoch(val_dataset, n_batch=n_batch, shuffle=shuffle, train=False)
                 logs['val_loss'] = val_loss
                 if val_loss < min_loss:
                     torch.save(self.net.state_dict(), os.path.join(self.checkpoint_folder, 'model'))
@@ -113,28 +115,7 @@ class Model:
                 chk_mkdir(epoch_save_path)
                 torch.save(self.net.state_dict(), os.path.join(epoch_save_path, 'model'))
 
-        self.net.train(False)
-
         return logger
-
-    def validate_dataset(self, dataset, n_batch=1):
-        self.net.train(False)
-
-        total_running_loss = 0
-        for batch_idx, (X_batch, y_batch, *rest) in enumerate(DataLoader(dataset, batch_size=n_batch, shuffle=False)):
-            X_batch = Variable(X_batch.to(device=self.device))
-            y_batch = Variable(y_batch.to(device=self.device))
-
-            y_out = self.net(X_batch)
-            training_loss = self.loss(y_out, y_batch)
-
-            total_running_loss += training_loss.item()
-
-        self.net.train(True)
-
-        del X_batch, y_batch
-
-        return total_running_loss / (batch_idx + 1)
 
     def predict_dataset(self, dataset, export_path):
         self.net.train(False)

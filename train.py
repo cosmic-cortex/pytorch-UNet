@@ -20,8 +20,8 @@ args = parser.parse_args()
 
 tf_train = Transform2D(crop=(512, 512), p_flip=0.5, color_jitter_params=(0.1, 0.1, 0.1, 0.1),
                        p_random_affine=0.5, long_mask=True)
-tf_val = Transform2D(crop=(512, 512), p_flip=0.5, color_jitter_params=None, long_mask=True)
-train_dataset = ImageToImage2D(args.train_dataset, tf_train)
+tf_val = Transform2D(crop=(512, 512), p_flip=0, color_jitter_params=None, long_mask=True)
+train_dataset = ImageToImage2D(args.train_dataset, tf_val)
 val_dataset = ImageToImage2D(args.val_dataset, tf_val)
 
 unet = UNet2D(3, 3, [10, 20, 30, 40])
