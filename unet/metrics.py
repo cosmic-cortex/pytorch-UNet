@@ -10,7 +10,7 @@ def jaccard_index(output, gt, long_gt=True):
     intersection = output*gt
     union = torch.max(output, gt)
 
-    return intersection.sum().float()/union.sum()
+    return (intersection.sum().float()/union.sum()).item()
 
 
 def accuracy(output, gt, long_gt=True):
@@ -18,4 +18,4 @@ def accuracy(output, gt, long_gt=True):
     if not long_gt:
         gt = gt = torch.argmax(gt, dim=1, keepdim=True)
 
-    return (output == gt).sum().float()/reduce(mul, output.shape)
+    return ((output == gt).sum().float()/reduce(mul, output.shape)).item()

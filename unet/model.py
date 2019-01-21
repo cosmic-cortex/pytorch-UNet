@@ -12,6 +12,7 @@ from skimage import io
 from time import time
 
 from .utils import chk_mkdir, Logger
+from .metrics import jaccard_index, accuracy
 
 
 class Model:
@@ -52,8 +53,8 @@ class Model:
         self.net.to(device=self.device)
         self.loss.to(device=self.device)
 
-    def fit_epoch(self, dataset, n_batch=1, shuffle=False, train=True):
-        self.net.train(train)
+    def fit_epoch(self, dataset, n_batch=1, shuffle=False):
+        self.net.train(True)
 
         epoch_running_loss = 0
 
@@ -63,15 +64,13 @@ class Model:
             y_batch = Variable(y_batch.to(device=self.device))
 
             # training
-            if train:
-                self.optimizer.zero_grad()
+            self.optimizer.zero_grad()
 
             y_out = self.net(X_batch)
             training_loss = self.loss(y_out, y_batch)
 
-            if train:
-                training_loss.backward()
-                self.optimizer.step()
+            training_loss.backward()
+            self.optimizer.step()
 
             epoch_running_loss += training_loss.item()
 
@@ -80,6 +79,29 @@ class Model:
         del X_batch, y_batch
 
         return epoch_running_loss / (batch_idx + 1)
+
+    def val_epoch(self, dataset, n_batch=1):
+        self.net.train(False)
+
+        log = {'val_loss': 0.0, 'jaccard': 0.0, 'accuracy': 0.0}
+
+        for batch_idx, (X_batch, y_batch, *rest) in enumerate(DataLoader(dataset, batch_size=n_batch)):
+
+            X_batch = Variable(X_batch.to(device=self.device))
+            y_batch = Variable(y_batch.to(device=self.device))
+
+            y_out = self.net(X_batch)
+            training_loss = self.loss(y_out, y_batch)
+            log['val_loss'] += training_loss.item()
+            log['jaccard'] += jaccard_index(y_out, y_batch, long_gt=False)
+            log['accuracy'] += accuracy(y_out, y_batch, long_gt=False)
+
+        del X_batch, y_batch
+
+        for key in log.keys():
+            log[key] /= batch_idx + 1
+
+        return log
 
     def fit_dataset(self, dataset: Dataset, n_epochs: int, n_batch: int = 1, shuffle: bool = False,
                     val_dataset: Dataset = None, save_freq: int = 100, verbose: bool = False):
@@ -94,7 +116,7 @@ class Model:
 
         for epoch_idx in range(1, n_epochs + 1):
             # doing the epoch
-            train_loss = self.fit_epoch(dataset, n_batch=n_batch, shuffle=shuffle, train=True)
+            train_loss = self.fit_epoch(dataset, n_batch=n_batch, shuffle=shuffle)
 
             # logging the losses
             logs = {'epoch': epoch_idx,
@@ -104,11 +126,12 @@ class Model:
                 self.scheduler.step(train_loss)
 
             if val_dataset is not None:
-                val_loss = self.fit_epoch(val_dataset, n_batch=n_batch, shuffle=shuffle, train=False)
-                logs['val_loss'] = val_loss
-                if val_loss < min_loss:
+                val_logs = self.val_epoch(val_dataset, n_batch=n_batch)
+                # val_loss = self.fit_epoch(val_dataset, n_batch=n_batch, shuffle=shuffle, train=False)
+                # logs['val_loss'] = val_loss
+                if val_logs['val_loss'] < min_loss:
                     torch.save(self.net.state_dict(), os.path.join(self.checkpoint_folder, 'model'))
-                    min_loss = val_loss
+                    min_loss = val_logs['val_loss']
             else:
                 if train_loss < min_loss:
                     torch.save(self.net.state_dict(), os.path.join(self.checkpoint_folder, 'model'))
@@ -118,6 +141,8 @@ class Model:
             epoch_end = time()
             logs['time'] = epoch_end - start
 
+            logs = {**logs, **val_logs}
+
             # recording the losses in the logger
             logger.log(logs)
             # saving model and logs
@@ -125,6 +150,9 @@ class Model:
                 epoch_save_path = os.path.join(self.checkpoint_folder, '%d' % epoch_idx)
                 chk_mkdir(epoch_save_path)
                 torch.save(self.net.state_dict(), os.path.join(epoch_save_path, 'model'))
+
+        # save the logger
+        self.logger = logger
 
         return logger
 
