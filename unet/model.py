@@ -65,13 +65,10 @@ class Model:
 
             # training
             self.optimizer.zero_grad()
-
             y_out = self.net(X_batch)
             training_loss = self.loss(y_out, y_batch)
-
             training_loss.backward()
             self.optimizer.step()
-
             epoch_running_loss += training_loss.item()
 
         self.net.train(False)
@@ -93,8 +90,8 @@ class Model:
             y_out = self.net(X_batch)
             training_loss = self.loss(y_out, y_batch)
             log['val_loss'] += training_loss.item()
-            log['jaccard'] += jaccard_index(y_out, y_batch, long_gt=False)
-            log['accuracy'] += accuracy(y_out, y_batch, long_gt=False)
+            log['jaccard'] += jaccard_index(y_out, y_batch)
+            log['accuracy'] += accuracy(y_out, y_batch)
 
         del X_batch, y_batch
 
