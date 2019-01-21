@@ -23,6 +23,8 @@ def correct_dims(*images):
     for img in images:
         if len(img.shape) == 2:
             corr_images.append(np.expand_dims(img, axis=2))
+        else:
+            corr_images.append(img)
 
     return corr_images
 
@@ -109,8 +111,6 @@ class ImageToImage2D(Dataset):
         mask = io.imread(os.path.join(self.output_path, image_filename))
 
         # correct dimensions if needed
-        # if len(mask.shape) == 2:
-        #     mask = np.expand_dims(mask, axis=2)
         image, mask = correct_dims(image, mask)
 
         if self.joint_transform:
