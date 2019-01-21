@@ -1,19 +1,21 @@
 import torch
+from operator import mul
+from functools import reduce
 
 
 def jaccard_index(output, gt, long_gt=True):
     if long_gt:
-        gt = torch.zeros(output.shape).scatter_(1, gt, torch.ones(output.shape))
+        gt = torch.zeros_like(output).scatter_(1, gt, 1)
 
     intersection = output*gt
     union = torch.max(output, gt)
 
-    return intersection.sum()/union.sum()
+    return intersection.sum().float()/union.sum()
 
 
-def accuracy(output, gt):
-    pass
+def accuracy(output, gt, long_gt=True):
+    output = torch.argmax(output, dim=1, keepdim=True)      # determining the predictions
+    if not long_gt:
+        gt = gt = torch.argmax(gt, dim=1, keepdim=True)
 
-
-def f1_score(output, gt):
-    pass
+    return (output == gt).sum().float()/reduce(mul, output.shape)
