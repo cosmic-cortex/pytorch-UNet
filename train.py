@@ -33,8 +33,7 @@ loss = nn.CrossEntropyLoss()
 optimizer = optim.Adam(unet.parameters(), lr=1e-3)
 
 model_name = '2019-01-18-test'
-file_dir = os.path.split(os.path.realpath(__file__))[0]
-results_folder = os.path.join(file_dir, '..', 'results', model_name)
+results_folder = os.path.join(args.checkpoint_path, model_name)
 if not os.path.exists(results_folder):
     os.makedirs(results_folder)
 

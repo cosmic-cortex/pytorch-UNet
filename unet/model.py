@@ -138,6 +138,7 @@ class Model:
 
             # recording the losses in the logger
             logger.log(logs)
+            logger.to_csv(os.path.join(self.checkpoint_folder, 'logs.csv'))
             # saving model and logs
             if save_freq and (epoch_idx % save_freq == 0):
                 epoch_save_path = os.path.join(self.checkpoint_folder, '%d' % epoch_idx)

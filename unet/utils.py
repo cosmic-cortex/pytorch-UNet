@@ -1,5 +1,7 @@
 import os
 
+import pandas as pd
+
 from numbers import Number
 from typing import Container
 from collections import defaultdict
@@ -31,6 +33,9 @@ class Logger:
 
     def get_logs(self):
         return self.logs
+
+    def to_csv(self, path):
+        pd.DataFrame(self.logs).to_csv(path, index=None)
 
 
 class MetricList:
