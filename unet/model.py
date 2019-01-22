@@ -122,8 +122,6 @@ class Model:
 
             if val_dataset is not None:
                 val_logs = self.val_epoch(val_dataset, n_batch=n_batch, metric_list=metric_list)
-                # val_loss = self.fit_epoch(val_dataset, n_batch=n_batch, shuffle=shuffle, train=False)
-                # logs['val_loss'] = val_loss
                 if val_logs['val_loss'] < min_loss:
                     torch.save(self.net.state_dict(), os.path.join(self.checkpoint_folder, 'model'))
                     min_loss = val_logs['val_loss']
@@ -132,13 +130,16 @@ class Model:
                     torch.save(self.net.state_dict(), os.path.join(self.checkpoint_folder, 'model'))
                     min_loss = train_loss
 
-            # measuring time
+            # measuring time and memory
             epoch_end = time()
-            logs = {'epoch': epoch_idx, 'time': epoch_end - train_start, **val_logs, **train_logs}
-
-            # recording the losses in the logger
+            # logging
+            logs = {'epoch': epoch_idx,
+                    'time': epoch_end - train_start,
+                    'memory': torch.cuda.memory_allocated(),
+                    **val_logs, **train_logs}
             logger.log(logs)
             logger.to_csv(os.path.join(self.checkpoint_folder, 'logs.csv'))
+
             # saving model and logs
             if save_freq and (epoch_idx % save_freq == 0):
                 epoch_save_path = os.path.join(self.checkpoint_folder, '%d' % epoch_idx)
