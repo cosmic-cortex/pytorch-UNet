@@ -1,5 +1,6 @@
 import os
 
+from numbers import Number
 from typing import Container
 from collections import defaultdict
 
@@ -30,3 +31,25 @@ class Logger:
 
     def get_logs(self):
         return self.logs
+
+
+class MetricList:
+    def __init__(self, metrics):
+        assert isinstance(metrics, dict), '\'metrics\' must be a dictionary of callables'
+        self.metrics = metrics
+        self.results = {key: 0.0 for key in self.metrics.keys()}
+
+    def __call__(self, y_out, y_batch):
+        for key, value in self.metrics.items():
+            self.results[key] += value(y_out, y_batch)
+
+    def reset(self):
+        self.results = {key: 0.0 for key in self.metrics.keys()}
+
+    def get_results(self, normalize=False):
+        assert isinstance(normalize, bool) or isinstance(normalize, Number), '\'normalize\' must be boolean or a number'
+        if not normalize:
+            return self.results
+        else:
+            return {key: value/normalize for key, value in self.results.items()}
+

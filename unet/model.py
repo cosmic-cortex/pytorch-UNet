@@ -11,7 +11,7 @@ from skimage import io
 
 from time import time
 
-from .utils import chk_mkdir, Logger
+from .utils import chk_mkdir, Logger, MetricList
 from .metrics import jaccard_index, accuracy
 
 
@@ -75,12 +75,14 @@ class Model:
 
         del X_batch, y_batch
 
-        return epoch_running_loss / (batch_idx + 1)
+        logs = {'train_loss': epoch_running_loss / (batch_idx + 1)}
 
-    def val_epoch(self, dataset, n_batch=1):
+        return logs
+
+    def val_epoch(self, dataset, n_batch=1, metric_list=MetricList({})):
         self.net.train(False)
-
-        log = {'val_loss': 0.0, 'jaccard': 0.0, 'accuracy': 0.0}
+        metric_list.reset()
+        running_val_loss = 0.0
 
         for batch_idx, (X_batch, y_batch, *rest) in enumerate(DataLoader(dataset, batch_size=n_batch)):
 
@@ -89,19 +91,19 @@ class Model:
 
             y_out = self.net(X_batch)
             training_loss = self.loss(y_out, y_batch)
-            log['val_loss'] += training_loss.item()
-            log['jaccard'] += jaccard_index(y_out, y_batch)
-            log['accuracy'] += accuracy(y_out, y_batch)
+            running_val_loss += training_loss.item()
+            metric_list(y_out, y_batch)
 
         del X_batch, y_batch
 
-        for key in log.keys():
-            log[key] /= batch_idx + 1
+        logs = {'val_loss': running_val_loss/(batch_idx + 1),
+                **metric_list.get_results(normalize=batch_idx+1)}
 
-        return log
+        return logs
 
     def fit_dataset(self, dataset: Dataset, n_epochs: int, n_batch: int = 1, shuffle: bool = False,
-                    val_dataset: Dataset = None, save_freq: int = 100, verbose: bool = False):
+                    val_dataset: Dataset = None, save_freq: int = 100, verbose: bool = False,
+                    metric_list=MetricList({})):
 
         logger = Logger(verbose=verbose)
 
@@ -109,21 +111,17 @@ class Model:
         min_loss = np.inf
 
         # measuring the time elapsed
-        start = time()
+        train_start = time()
 
         for epoch_idx in range(1, n_epochs + 1):
             # doing the epoch
-            train_loss = self.fit_epoch(dataset, n_batch=n_batch, shuffle=shuffle)
-
-            # logging the losses
-            logs = {'epoch': epoch_idx,
-                    'train_loss': train_loss}
+            train_logs = self.fit_epoch(dataset, n_batch=n_batch, shuffle=shuffle)
 
             if self.scheduler is not None:
                 self.scheduler.step(train_loss)
 
             if val_dataset is not None:
-                val_logs = self.val_epoch(val_dataset, n_batch=n_batch)
+                val_logs = self.val_epoch(val_dataset, n_batch=n_batch, metric_list=metric_list)
                 # val_loss = self.fit_epoch(val_dataset, n_batch=n_batch, shuffle=shuffle, train=False)
                 # logs['val_loss'] = val_loss
                 if val_logs['val_loss'] < min_loss:
@@ -136,9 +134,7 @@ class Model:
 
             # measuring time
             epoch_end = time()
-            logs['time'] = epoch_end - start
-
-            logs = {**logs, **val_logs}
+            logs = {'epoch': epoch_idx, 'time': epoch_end - train_start, **val_logs, **train_logs}
 
             # recording the losses in the logger
             logger.log(logs)

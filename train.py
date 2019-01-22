@@ -1,5 +1,5 @@
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+os.environ['CUDA_VISIBLE_DEVICES'] = '2'
 
 import torch.nn as nn
 import torch.optim as optim
@@ -7,6 +7,8 @@ from argparse import ArgumentParser
 
 from unet.unet import UNet2D
 from unet.model import Model
+from unet.utils import MetricList
+from unet.metrics import jaccard_index, accuracy
 from unet.dataset import Transform2D, ImageToImage2D
 
 
@@ -36,7 +38,10 @@ results_folder = os.path.join(file_dir, '..', 'results', model_name)
 if not os.path.exists(results_folder):
     os.makedirs(results_folder)
 
+metric_list = MetricList({'jaccard': jaccard_index, 'accuracy': accuracy})
+
 model = Model(unet, loss, optimizer, results_folder, device=args.device)
 model.fit_dataset(train_dataset, n_epochs=args.epochs, n_batch=args.batch_size,
-                  shuffle=True, val_dataset=val_dataset, save_freq=args.save_freq, verbose=True)
+                  shuffle=True, val_dataset=val_dataset, save_freq=args.save_freq,
+                  metric_list=metric_list, verbose=True)
 
