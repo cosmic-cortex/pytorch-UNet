@@ -1,4 +1,15 @@
 import torch.nn as nn
+from torch.nn.modules.loss import _Loss
+
+
+class SoftDiceLoss(_Loss):
+    def __init__(self, size_average=None, reduce=None, reduction='mean'):
+        super(SoftDiceLoss, self).__init__(size_average, reduce, reduction)
+
+    def forward(self, y_pred, y_gt):
+        numerator = torch.sum(y_pred*y_gt)
+        denominator = torch.sum(y_pred*y_pred + y_gt*y_gt)
+        return numerator/denominator
 
 
 class First2D(nn.Module):
@@ -112,7 +123,7 @@ class Last2D(nn.Module):
             nn.BatchNorm2d(middle_channels),
             nn.ReLU(inplace=True),
             nn.Conv2d(middle_channels, out_channels, kernel_size=1),
-            nn.Sigmoid()
+            nn.Softmax2d()
         ]
 
         self.first = nn.Sequential(*layers)
