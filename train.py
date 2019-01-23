@@ -1,14 +1,16 @@
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '2'
+os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 
 import torch.nn as nn
 import torch.optim as optim
+
 from argparse import ArgumentParser
+from functools import partial
 
 from unet.unet import UNet2D
 from unet.model import Model
 from unet.utils import MetricList
-from unet.metrics import jaccard_index, accuracy
+from unet.metrics import jaccard_index, accuracy, f1_score
 from unet.dataset import Transform2D, ImageToImage2D
 
 
@@ -17,9 +19,11 @@ parser.add_argument('--train_dataset', required=True, type=str)
 parser.add_argument('--val_dataset', type=str)
 parser.add_argument('--checkpoint_path', required=True, type=str)
 parser.add_argument('--device', default='cpu', type=str)
+parser.add_argument('--depth', default=5, type=int)
 parser.add_argument('--epochs', default=100, type=int)
 parser.add_argument('--batch_size', default=1, type=int)
 parser.add_argument('--save_freq', default=0, type=int)
+parser.add_argument('--model_name', type=str, required=True)
 args = parser.parse_args()
 
 tf_train = Transform2D(crop=(512, 512), p_flip=0.5, color_jitter_params=(0.1, 0.1, 0.1, 0.1),
@@ -28,19 +32,19 @@ tf_val = Transform2D(crop=(512, 512), p_flip=0, color_jitter_params=None, long_m
 train_dataset = ImageToImage2D(args.train_dataset, tf_val)
 val_dataset = ImageToImage2D(args.val_dataset, tf_val)
 
-unet = UNet2D(3, 3, [10, 20, 30, 40])
+conv_depths = [int(32*(2**k)) for k in range(args.depth)]
+unet = UNet2D(3, 3, conv_depths)
 loss = nn.CrossEntropyLoss()
 optimizer = optim.Adam(unet.parameters(), lr=1e-3)
 
-model_name = '2019-01-18-test'
-results_folder = os.path.join(args.checkpoint_path, model_name)
+results_folder = os.path.join(args.checkpoint_path, args.model_name)
 if not os.path.exists(results_folder):
     os.makedirs(results_folder)
 
-metric_list = MetricList({'jaccard': jaccard_index, 'accuracy': accuracy})
+metric_list = MetricList({'jaccard': jaccard_index, 'accuracy': accuracy,
+                          'f1': partial(f1_score, n_classes=3)})
 
 model = Model(unet, loss, optimizer, results_folder, device=args.device)
 model.fit_dataset(train_dataset, n_epochs=args.epochs, n_batch=args.batch_size,
                   shuffle=True, val_dataset=val_dataset, save_freq=args.save_freq,
                   metric_list=metric_list, verbose=True)
-
