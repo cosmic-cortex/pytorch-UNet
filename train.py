@@ -1,5 +1,5 @@
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
 import torch.nn as nn
 import torch.optim as optim
@@ -26,14 +26,15 @@ parser.add_argument('--save_freq', default=0, type=int)
 parser.add_argument('--model_name', type=str, required=True)
 args = parser.parse_args()
 
-tf_train = Transform2D(crop=(512, 512), p_flip=0.5, color_jitter_params=(0.1, 0.1, 0.1, 0.1),
-                       p_random_affine=0.5, long_mask=True)
+# tf_train = Transform2D(crop=(512, 512), p_flip=0.5, color_jitter_params=(0.1, 0.1, 0.1, 0.1),
+#                        p_random_affine=0.5, long_mask=True)
+tf_train = Transform2D(crop=(512, 512), p_flip=0, color_jitter_params=None, long_mask=True)
 tf_val = Transform2D(crop=(512, 512), p_flip=0, color_jitter_params=None, long_mask=True)
 train_dataset = ImageToImage2D(args.train_dataset, tf_val)
 val_dataset = ImageToImage2D(args.val_dataset, tf_val)
 
 conv_depths = [int(32*(2**k)) for k in range(args.depth)]
-unet = UNet2D(3, 3, conv_depths)
+unet = UNet2D(1, 2, conv_depths)
 loss = nn.CrossEntropyLoss()
 optimizer = optim.Adam(unet.parameters(), lr=1e-3)
 

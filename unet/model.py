@@ -103,7 +103,7 @@ class Model:
 
     def fit_dataset(self, dataset: Dataset, n_epochs: int, n_batch: int = 1, shuffle: bool = False,
                     val_dataset: Dataset = None, save_freq: int = 100, verbose: bool = False,
-                    metric_list=MetricList({})):
+                    metric_list=MetricList({}), save_all=True):
 
         logger = Logger(verbose=verbose)
 
@@ -123,12 +123,15 @@ class Model:
             if val_dataset is not None:
                 val_logs = self.val_epoch(val_dataset, n_batch=n_batch, metric_list=metric_list)
                 if val_logs['val_loss'] < min_loss:
-                    torch.save(self.net.state_dict(), os.path.join(self.checkpoint_folder, 'model'))
+                    torch.save(self.net.state_dict(), os.path.join(self.checkpoint_folder, 'best_model'))
                     min_loss = val_logs['val_loss']
             else:
                 if train_loss < min_loss:
-                    torch.save(self.net.state_dict(), os.path.join(self.checkpoint_folder, 'model'))
+                    torch.save(self.net.state_dict(), os.path.join(self.checkpoint_folder, 'best_model'))
                     min_loss = train_loss
+
+            if save_all:
+                torch.save(self.net.state_dict(), os.path.join(self.checkpoint_folder, 'latest_model'))
 
             # measuring time and memory
             epoch_end = time()
