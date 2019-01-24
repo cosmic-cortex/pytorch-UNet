@@ -26,7 +26,10 @@ def correct_dims(*images):
         else:
             corr_images.append(img)
 
-    return corr_images
+    if len(corr_images) == 1:
+        return corr_images[0]
+    else:
+        return corr_images
 
 
 class Transform2D:
@@ -136,7 +139,7 @@ class Image2D(Dataset):
 
     def __init__(self, dataset_path: str, transform: Callable = None):
         self.dataset_path = dataset_path
-        self.input_path = os.path.join(dataset_path, 'input')
+        self.input_path = os.path.join(dataset_path, 'images')
         self.images_list = os.listdir(self.input_path)
 
         self.transform = transform
@@ -148,9 +151,12 @@ class Image2D(Dataset):
         image_filename = self.images_list[idx]
         image = io.imread(os.path.join(self.input_path, image_filename))
 
+        # correct dimensions if needed
+        image = correct_dims(image)
+
         if self.transform:
             image = self.transform(image)
         else:
-            image = F.to_tensor(image)
+            image = T.ToTensor()(image)
 
         return image, image_filename
