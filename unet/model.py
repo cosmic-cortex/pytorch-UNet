@@ -102,8 +102,8 @@ class Model:
         return logs
 
     def fit_dataset(self, dataset: Dataset, n_epochs: int, n_batch: int = 1, shuffle: bool = False,
-                    val_dataset: Dataset = None, save_freq: int = 100, verbose: bool = False,
-                    metric_list=MetricList({}), save_all=True):
+                    val_dataset: Dataset = None, save_freq: int = 100, predict_dataset: Dataset = None,
+                    metric_list=MetricList({}), verbose: bool = False):
 
         logger = Logger(verbose=verbose)
 
@@ -130,8 +130,7 @@ class Model:
                     torch.save(self.net.state_dict(), os.path.join(self.checkpoint_folder, 'best_model'))
                     min_loss = train_loss
 
-            if save_all:
-                torch.save(self.net.state_dict(), os.path.join(self.checkpoint_folder, 'latest_model'))
+            torch.save(self.net.state_dict(), os.path.join(self.checkpoint_folder, 'latest_model'))
 
             # measuring time and memory
             epoch_end = time()
@@ -148,6 +147,8 @@ class Model:
                 epoch_save_path = os.path.join(self.checkpoint_folder, '%d' % epoch_idx)
                 chk_mkdir(epoch_save_path)
                 torch.save(self.net.state_dict(), os.path.join(epoch_save_path, 'model'))
+                if predict_dataset:
+                    self.predict_dataset(predict_dataset, epoch_save_path)
 
         # save the logger
         self.logger = logger
@@ -167,7 +168,7 @@ class Model:
             X_batch = Variable(X_batch.to(device=self.device))
             y_out = self.net(X_batch).cpu().data.numpy()
 
-            io.imsave(os.path.join(export_path, image_filename), y_out[0, :, :, :].transpose((1, 2, 0)))
+            io.imsave(os.path.join(export_path, image_filename), y_out[0, 1, :, :])
 
     def predict_batch(self, X_batch):
         self.net.train(False)
