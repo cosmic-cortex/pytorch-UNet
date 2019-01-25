@@ -12,7 +12,6 @@ from skimage import io
 from time import time
 
 from .utils import chk_mkdir, Logger, MetricList
-from .metrics import jaccard_index, accuracy
 
 
 class Model:

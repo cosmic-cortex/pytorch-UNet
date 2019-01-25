@@ -1,9 +1,8 @@
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
 import torch.nn as nn
 import torch.optim as optim
-from torchvision.transforms import ToTensor
 
 from argparse import ArgumentParser
 from functools import partial
@@ -11,7 +10,7 @@ from functools import partial
 from unet.unet import UNet2D
 from unet.model import Model
 from unet.utils import MetricList
-from unet.metrics import jaccard_index, accuracy, f1_score
+from unet.metrics import jaccard_index, f1_score
 from unet.dataset import Transform2D, ImageToImage2D, Image2D
 
 
@@ -27,10 +26,9 @@ parser.add_argument('--save_freq', default=0, type=int)
 parser.add_argument('--model_name', type=str, required=True)
 args = parser.parse_args()
 
-# tf_train = Transform2D(crop=(512, 512), p_flip=0.5, color_jitter_params=(0.1, 0.1, 0.1, 0.1),
-#                        p_random_affine=0.5, long_mask=True)
-tf_train = Transform2D(crop=(512, 512), p_flip=0, color_jitter_params=None, long_mask=True)
-tf_val = Transform2D(crop=(512, 512), p_flip=0, color_jitter_params=None, long_mask=True)
+crop = (512, 512)
+tf_train = Transform2D(crop=crop, p_flip=0.5, color_jitter_params=None, long_mask=True)
+tf_val = Transform2D(crop=crop, p_flip=0, color_jitter_params=None, long_mask=True)
 train_dataset = ImageToImage2D(args.train_dataset, tf_val)
 val_dataset = ImageToImage2D(args.val_dataset, tf_val)
 predict_dataset = Image2D(args.val_dataset)
@@ -44,8 +42,9 @@ results_folder = os.path.join(args.checkpoint_path, args.model_name)
 if not os.path.exists(results_folder):
     os.makedirs(results_folder)
 
-metric_list = MetricList({'jaccard': jaccard_index, 'accuracy': accuracy,
-                          'f1': partial(f1_score, n_classes=3)})
+weights = [0.0, 1.0]
+metric_list = MetricList({'jaccard': partial(jaccard_index, weights=weights),
+                          'f1': partial(f1_score, weights=weights)})
 
 model = Model(unet, loss, optimizer, results_folder, device=args.device)
 
