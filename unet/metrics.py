@@ -51,8 +51,8 @@ def make_weighted_metric(classwise_metric):
         # dimensions to sum over
         dims = (0, *range(2, len(output.shape)))
 
+        # default weights
         if weights == None:
-            # default weights
             weights = torch.ones(output.shape[1]) / output.shape[1]
         else:
             # creating tensor if needed
@@ -63,9 +63,9 @@ def make_weighted_metric(classwise_metric):
 
         classwise_scores = classwise_metric(output, gt).cpu()
 
-        return (classwise_scores * weights).sum()
+        return (classwise_scores * weights).sum().item()
 
-    return weighted_metric.item()
+    return weighted_metric
 
 
 jaccard_index = make_weighted_metric(classwise_iou)
