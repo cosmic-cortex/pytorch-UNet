@@ -123,7 +123,6 @@ class Last2D(nn.Module):
             nn.BatchNorm2d(middle_channels),
             nn.ReLU(inplace=True),
             nn.Conv2d(middle_channels, out_channels, kernel_size=1),
-            nn.Softmax2d()
         ]
 
         self.first = nn.Sequential(*layers)
@@ -243,7 +242,6 @@ class Last3D(nn.Module):
             nn.BatchNorm3d(middle_channels),
             nn.ReLU(inplace=True),
             nn.Conv3d(middle_channels, out_channels, kernel_size=1),
-            nn.Sigmoid()
         ]
 
         self.first = nn.Sequential(*layers)

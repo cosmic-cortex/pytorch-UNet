@@ -143,9 +143,9 @@ class Model:
 
             # saving model and logs
             if save_freq and (epoch_idx % save_freq == 0):
-                epoch_save_path = os.path.join(self.checkpoint_folder, '%d' % epoch_idx)
+                epoch_save_path = os.path.join(self.checkpoint_folder, str(epoch_idx).zfill(4))
                 chk_mkdir(epoch_save_path)
-                torch.save(self.net.state_dict(), os.path.join(epoch_save_path, 'model'))
+                #torch.save(self.net.state_dict(), os.path.join(epoch_save_path, 'model'))
                 if predict_dataset:
                     self.predict_dataset(predict_dataset, epoch_save_path)
 
