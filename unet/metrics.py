@@ -7,6 +7,9 @@ from operator import mul
 from functools import reduce
 
 
+EPSILON = 1e-32
+
+
 class LogNLLLoss(nn.Module):
     def __init__(self):
         super(LogNLLLoss, self).__init__()
@@ -25,8 +28,8 @@ def classwise_iou(output, gt):
     dims = (0, *range(2, len(output.shape)))
     gt = torch.zeros_like(output).scatter_(1, gt[:, None, :], 1)
     intersection = output*gt
-    union = output + gt - intersection # torch.max(output, gt)
-    classwise_iou = (intersection.sum(dim=dims).float() / union.sum(dim=dims))
+    union = output + gt - intersection
+    classwise_iou = (intersection.sum(dim=dims).float() + EPSILON) / (union.sum(dim=dims) + EPSILON)
 
     return classwise_iou
 
@@ -82,3 +85,8 @@ def make_weighted_metric(classwise_metric):
 
 jaccard_index = make_weighted_metric(classwise_iou)
 f1_score = make_weighted_metric(classwise_f1)
+
+
+if __name__ == '__main__':
+    output, gt = torch.zeros(3, 2, 5, 5), torch.zeros(3, 5, 5).long()
+    print(classwise_iou(output, gt))
