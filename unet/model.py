@@ -117,7 +117,7 @@ class Model:
             train_logs = self.fit_epoch(dataset, n_batch=n_batch, shuffle=shuffle)
 
             if self.scheduler is not None:
-                self.scheduler.step(train_loss)
+                self.scheduler.step(train_logs['train_loss'])
 
             if val_dataset is not None:
                 val_logs = self.val_epoch(val_dataset, n_batch=n_batch, metric_list=metric_list)
