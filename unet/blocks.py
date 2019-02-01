@@ -123,6 +123,7 @@ class Last2D(nn.Module):
             nn.BatchNorm2d(middle_channels),
             nn.ReLU(inplace=True),
             nn.Conv2d(middle_channels, out_channels, kernel_size=1),
+            nn.Softmax(dim=1)
         ]
 
         self.first = nn.Sequential(*layers)
@@ -141,8 +142,7 @@ class First3D(nn.Module):
             nn.ReLU(inplace=True),
             nn.Conv3d(middle_channels, out_channels, kernel_size=3, padding=1),
             nn.BatchNorm3d(out_channels),
-            nn.ReLU(inplace=True),
-            nn.Softmax2d()
+            nn.ReLU(inplace=True)
         ]
 
         if dropout:
@@ -243,6 +243,7 @@ class Last3D(nn.Module):
             nn.BatchNorm3d(middle_channels),
             nn.ReLU(inplace=True),
             nn.Conv3d(middle_channels, out_channels, kernel_size=1),
+            nn.Softmax(dim=1)
         ]
 
         self.first = nn.Sequential(*layers)

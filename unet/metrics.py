@@ -1,7 +1,19 @@
 import torch
+import torch.nn as nn
+from torch.nn.functional import cross_entropy
+from torch.nn.modules.loss import _WeightedLoss
 
 from operator import mul
 from functools import reduce
+
+
+class LogNLLLoss(nn.Module):
+    def __init__(self):
+        super(LogNLLLoss, self).__init__()
+
+    def forward(self, input, target):
+        input = torch.log(input)
+        return cross_entropy(input, target)
 
 
 def classwise_iou(output, gt):

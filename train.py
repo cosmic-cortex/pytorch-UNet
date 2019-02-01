@@ -10,7 +10,7 @@ from functools import partial
 from unet.unet import UNet2D
 from unet.model import Model
 from unet.utils import MetricList
-from unet.metrics import jaccard_index, f1_score
+from unet.metrics import jaccard_index, f1_score, LogNLLLoss
 from unet.dataset import Transform2D, ImageToImage2D, Image2D
 
 
@@ -35,8 +35,8 @@ predict_dataset = Image2D(args.val_dataset)
 
 conv_depths = [int(32*(2**k)) for k in range(args.depth)]
 unet = UNet2D(3, 2, conv_depths)
-loss = nn.NLLLoss()
-optimizer = optim.Adam(unet.parameters(), lr=1e-3)
+loss = LogNLLLoss()
+optimizer = optim.Adam(unet.parameters(), lr=1e-4)
 scheduler = optim.lr_scheduler.MultiStepLR(optimizer, gamma=0.1, milestones=[200, 600, 900])
 
 results_folder = os.path.join(args.checkpoint_path, args.model_name)
