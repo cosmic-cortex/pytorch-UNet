@@ -26,7 +26,7 @@ parser.add_argument('--save_freq', default=0, type=int)
 parser.add_argument('--model_name', type=str, required=True)
 args = parser.parse_args()
 
-crop = (256, 256)
+crop = None
 tf_train = Transform2D(crop=crop, p_flip=0.5, color_jitter_params=None, long_mask=True)
 tf_val = Transform2D(crop=crop, p_flip=0, color_jitter_params=None, long_mask=True)
 train_dataset = ImageToImage2D(args.train_dataset, tf_val)
@@ -35,7 +35,7 @@ predict_dataset = Image2D(args.val_dataset)
 
 conv_depths = [int(32*(2**k)) for k in range(args.depth)]
 unet = UNet2D(3, 2, conv_depths)
-loss = nn.CrossEntropyLoss()
+loss = nn.NLLLoss()
 optimizer = optim.Adam(unet.parameters(), lr=1e-3)
 scheduler = optim.lr_scheduler.MultiStepLR(optimizer, gamma=0.1, milestones=[200, 600, 900])
 
