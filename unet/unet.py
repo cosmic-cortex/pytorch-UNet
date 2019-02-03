@@ -28,7 +28,7 @@ class UNet2D(nn.Module):
         self.center = Center2D(conv_depths[-2], conv_depths[-1], conv_depths[-1], conv_depths[-2])
         self.decoder_layers = nn.Sequential(*decoder_layers)
 
-    def forward(self, x):
+    def forward(self, x, return_all=False):
         x_enc = [x]
         for enc_layer in self.encoder_layers:
             x_enc.append(enc_layer(x_enc[-1]))
@@ -42,7 +42,10 @@ class UNet2D(nn.Module):
             )
             x_dec.append(dec_layer(x_cat))
 
-        return x_dec[-1]
+        if not return_all:
+            return x_dec[-1]
+        else:
+            return x_enc + x_dec
 
 
 class UNet3D(nn.Module):
@@ -68,7 +71,7 @@ class UNet3D(nn.Module):
         self.center = Center3D(conv_depths[-2], conv_depths[-1], conv_depths[-1], conv_depths[-2])
         self.decoder_layers = nn.Sequential(*decoder_layers)
 
-    def forward(self, x):
+    def forward(self, x, return_all=False):
         x_enc = [x]
         for enc_layer in self.encoder_layers:
             x_enc.append(enc_layer(x_enc[-1]))
@@ -82,7 +85,10 @@ class UNet3D(nn.Module):
             )
             x_dec.append(dec_layer(x_cat))
 
-        return x_dec[-1]
+        if not return_all:
+            return x_dec[-1]
+        else:
+            return x_enc + x_dec
 
 
 def pad_to_shape(this, shp):
