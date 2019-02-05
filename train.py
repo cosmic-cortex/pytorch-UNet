@@ -1,5 +1,5 @@
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+os.environ['CUDA_VISIBLE_DEVICES'] = '2'
 
 import torch.nn as nn
 import torch.optim as optim
@@ -20,6 +20,7 @@ parser.add_argument('--val_dataset', type=str)
 parser.add_argument('--checkpoint_path', required=True, type=str)
 parser.add_argument('--device', default='cpu', type=str)
 parser.add_argument('--depth', default=5, type=int)
+parser.add_argument('--width', default=32, type=int)
 parser.add_argument('--epochs', default=100, type=int)
 parser.add_argument('--batch_size', default=1, type=int)
 parser.add_argument('--save_freq', default=0, type=int)
@@ -34,7 +35,7 @@ train_dataset = ImageToImage2D(args.train_dataset, tf_val)
 val_dataset = ImageToImage2D(args.val_dataset, tf_val)
 predict_dataset = Image2D(args.val_dataset)
 
-conv_depths = [int(32*(2**k)) for k in range(args.depth)]
+conv_depths = [int(args.width*(2**k)) for k in range(args.depth)]
 unet = UNet2D(3, 2, conv_depths)
 loss = LogNLLLoss()
 optimizer = optim.Adam(unet.parameters(), lr=args.learning_rate)
