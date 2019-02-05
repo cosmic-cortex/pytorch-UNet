@@ -1,5 +1,4 @@
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '2'
 
 import torch.nn as nn
 import torch.optim as optim
@@ -24,6 +23,7 @@ parser.add_argument('--width', default=32, type=int)
 parser.add_argument('--epochs', default=100, type=int)
 parser.add_argument('--batch_size', default=1, type=int)
 parser.add_argument('--save_freq', default=0, type=int)
+parser.add_argument('--save_model', default=0, type=int)
 parser.add_argument('--model_name', type=str, required=True)
 parser.add_argument('--learning_rate', type=float, default=1e-3)
 args = parser.parse_args()
@@ -48,7 +48,7 @@ weights = [0.0, 1.0]
 metric_list = MetricList({'jaccard': partial(jaccard_index, weights=weights),
                           'f1': partial(f1_score, weights=weights)})
 
-model = Model(unet, loss, optimizer, results_folder, device=args.device)
+model = Model(unet, loss, optimizer, results_folder, device=args.device, save_model=args.save_model)
 
 model.fit_dataset(train_dataset, n_epochs=args.epochs, n_batch=args.batch_size,
                   shuffle=True, val_dataset=val_dataset, save_freq=args.save_freq,

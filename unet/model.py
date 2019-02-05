@@ -17,7 +17,8 @@ from .utils import chk_mkdir, Logger, MetricList
 class Model:
     def __init__(self, net: nn.Module, loss, optimizer, checkpoint_folder: str,
                  scheduler: torch.optim.lr_scheduler._LRScheduler = None,
-                 device: torch.device = torch.device('cpu')):
+                 device: torch.device = torch.device('cpu'),
+                 save_model: bool = False):
         """
         Wrapper for PyTorch models.
 
@@ -51,6 +52,7 @@ class Model:
         self.device = device
         self.net.to(device=self.device)
         self.loss.to(device=self.device)
+        self.save_model = save_model
 
     def fit_epoch(self, dataset, n_batch=1, shuffle=False):
         self.net.train(True)
@@ -121,15 +123,18 @@ class Model:
 
             if val_dataset is not None:
                 val_logs = self.val_epoch(val_dataset, n_batch=n_batch, metric_list=metric_list)
-                if val_logs['val_loss'] < min_loss:
+                loss = val_logs['val_loss']
+            else:
+                loss = train_logs['train_loss']
+
+            if self.save_model:
+                # saving best model
+                if loss < min_loss:
                     torch.save(self.net.state_dict(), os.path.join(self.checkpoint_folder, 'best_model'))
                     min_loss = val_logs['val_loss']
-            else:
-                if train_loss < min_loss:
-                    torch.save(self.net.state_dict(), os.path.join(self.checkpoint_folder, 'best_model'))
-                    min_loss = train_loss
 
-            torch.save(self.net.state_dict(), os.path.join(self.checkpoint_folder, 'latest_model'))
+                # saving latest model
+                torch.save(self.net.state_dict(), os.path.join(self.checkpoint_folder, 'latest_model'))
 
             # measuring time and memory
             epoch_end = time()
