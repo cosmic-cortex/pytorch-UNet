@@ -12,9 +12,24 @@ from skimage import io
 from time import time
 
 from .utils import chk_mkdir, Logger, MetricList
+from .dataset import ImageToImage2D, Image2D
 
 
 class Model:
+    """
+    Wrapper for the U-Net network. (Or basically any CNN for semantic segmentation.)
+
+    Args:
+        net: the neural network, which should be an instance of unet.unet.UNet2D
+        loss: loss function to be used during training
+        optimizer: optimizer to be used during training
+        checkpoint_folder: path to the folder where you wish to save the results
+        scheduler: learning rate scheduler (optional)
+        device: torch.device object where you would like to do the training
+            (optional, default is cpu)
+        save_model: bool, indicates whether or not you wish to save the models
+            during training (optional, default is False)
+    """
     def __init__(self, net: nn.Module, loss, optimizer, checkpoint_folder: str,
                  scheduler: torch.optim.lr_scheduler._LRScheduler = None,
                  device: torch.device = torch.device('cpu'),
@@ -55,6 +70,19 @@ class Model:
         self.save_model = save_model
 
     def fit_epoch(self, dataset, n_batch=1, shuffle=False):
+        """
+        Trains the model for one epoch on the provided dataset.
+
+        Args:
+             dataset: an instance of unet.dataset.ImageToImage2D
+             n_batch: size of batch during training
+             shuffle: bool, indicates whether or not to shuffle the dataset
+                during training
+
+        Returns:
+              logs: dictionary object containing the training loss
+        """
+
         self.net.train(True)
 
         epoch_running_loss = 0
@@ -81,6 +109,20 @@ class Model:
         return logs
 
     def val_epoch(self, dataset, n_batch=1, metric_list=MetricList({})):
+        """
+        Validation of given dataset.
+
+        Args:
+             dataset: an instance of unet.dataset.ImageToImage2D
+             n_batch: size of batch during training
+             metric_list: unet.utils.MetricList object, which contains metrics
+                to be recorded during validation
+
+        Returns:
+            logs: dictionary object containing the validation loss and
+                the metrics given by the metric_list object
+        """
+
         self.net.train(False)
         metric_list.reset()
         running_val_loss = 0.0
@@ -102,9 +144,30 @@ class Model:
 
         return logs
 
-    def fit_dataset(self, dataset: Dataset, n_epochs: int, n_batch: int = 1, shuffle: bool = False,
-                    val_dataset: Dataset = None, save_freq: int = 100, predict_dataset: Dataset = None,
-                    metric_list=MetricList({}), verbose: bool = False):
+    def fit_dataset(self, dataset: ImageToImage2D, n_epochs: int, n_batch: int = 1, shuffle: bool = False,
+                    val_dataset: ImageToImage2D = None, save_freq: int = 100, predict_dataset: Image2D = None,
+                    metric_list: MetricList = MetricList({}), verbose: bool = False):
+
+        """
+        Training loop for the network.
+
+        Args:
+            dataset: an instance of unet.dataset.ImageToImage2D
+            n_epochs: number of epochs
+            shuffle: bool indicating whether or not suffle the dataset during training
+            val_dataset: validation dataset, instance of unet.dataset.ImageToImage2D (optional)
+            save_freq: frequency of saving the model and predictions from predict_dataset
+            predict_dataset: images to be predicted and saved during epochs determined
+                by save_freq, instance of unet.dataset.Image2D (optional)
+            n_batch: size of batch during training
+            metric_list: unet.utils.MetricList object, which contains metrics
+                to be recorded during validation
+            verbose: bool indicating whether or not print the logs to stdout
+
+        Returns:
+            logger: unet.utils.Logger object containing all logs recorded during
+                training
+        """
 
         logger = Logger(verbose=verbose)
 
@@ -160,6 +223,13 @@ class Model:
         return logger
 
     def predict_dataset(self, dataset, export_path):
+        """
+        Predicts the images in the given dataset and saves it to disk.
+
+        Args:
+            dataset: the dataset of images to be exported, instance of unet.dataset.Image2D
+            export_path: path to folder where results to be saved
+        """
         self.net.train(False)
         chk_mkdir(export_path)
 
