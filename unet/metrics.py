@@ -1,10 +1,6 @@
 import torch
-import torch.nn as nn
 from torch.nn.functional import cross_entropy
 from torch.nn.modules.loss import _WeightedLoss
-
-from operator import mul
-from functools import reduce
 
 
 EPSILON = 1e-32
