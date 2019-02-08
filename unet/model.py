@@ -243,11 +243,3 @@ class Model:
             y_out = self.net(X_batch).cpu().data.numpy()
 
             io.imsave(os.path.join(export_path, image_filename), y_out[0, 1, :, :])
-
-    def predict_batch(self, X_batch):
-        self.net.train(False)
-
-        X_batch = Variable(X_batch.to(device=self.device))
-        y_out = self.net(X_batch)
-
-        return y_out
