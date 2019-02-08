@@ -19,9 +19,7 @@ the Kaggle Data Science Bowl 2018.
 An example image from the Kaggle Data Science Bowl 2018:
 <p align="middle">
   <img src="docs/img/tissue_original.png" width="256" />
-  <figcaption>original image</figcaption>
   <img src="docs/img/tissue_segmented.png" width="256" />
-  <figcaption>U-Net segmentation</figcaption> 
 </p>
 
 This repository was created to 
