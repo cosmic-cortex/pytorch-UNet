@@ -66,7 +66,8 @@ class Model:
         # moving net and loss to the selected device
         self.device = device
         self.net.to(device=self.device)
-        self.loss.to(device=self.device)
+        try:
+            self.loss.to(device=self.device)
         self.save_model = save_model
 
     def fit_epoch(self, dataset, n_batch=1, shuffle=False):
@@ -193,11 +194,11 @@ class Model:
             if self.save_model:
                 # saving best model
                 if loss < min_loss:
-                    torch.save(self.net.state_dict(), os.path.join(self.checkpoint_folder, 'best_model'))
+                    torch.save(self.net, os.path.join(self.checkpoint_folder, 'best_model.pt'))
                     min_loss = val_logs['val_loss']
 
                 # saving latest model
-                torch.save(self.net.state_dict(), os.path.join(self.checkpoint_folder, 'latest_model'))
+                torch.save(self.net, os.path.join(self.checkpoint_folder, 'latest_model.pt'))
 
             # measuring time and memory
             epoch_end = time()
@@ -213,7 +214,7 @@ class Model:
             if save_freq and (epoch_idx % save_freq == 0):
                 epoch_save_path = os.path.join(self.checkpoint_folder, str(epoch_idx).zfill(4))
                 chk_mkdir(epoch_save_path)
-                torch.save(self.net.state_dict(), os.path.join(epoch_save_path, 'model'))
+                torch.save(self.net, os.path.join(epoch_save_path, 'model.pt'))
                 if predict_dataset:
                     self.predict_dataset(predict_dataset, epoch_save_path)
 
