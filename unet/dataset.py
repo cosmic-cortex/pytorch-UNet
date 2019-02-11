@@ -122,9 +122,13 @@ class ImageToImage2D(Dataset):
         self.input_path = os.path.join(dataset_path, 'images')
         self.output_path = os.path.join(dataset_path, 'masks')
         self.images_list = os.listdir(self.input_path)
-
-        self.joint_transform = joint_transform
         self.one_hot_mask = one_hot_mask
+
+        if joint_transform:
+            self.joint_transform = joint_transform
+        else:
+            to_tensor = T.ToTensor()
+            self.joint_transform = lambda x, y: (to_tensor(x), to_tensor(y))
 
     def __len__(self):
         return len(os.listdir(self.input_path))
