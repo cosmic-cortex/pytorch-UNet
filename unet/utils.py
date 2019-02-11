@@ -57,4 +57,3 @@ class MetricList:
             return self.results
         else:
             return {key: value/normalize for key, value in self.results.items()}
-

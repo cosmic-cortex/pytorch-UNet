@@ -9,7 +9,7 @@ from unet.unet import UNet2D
 from unet.model import Model
 from unet.utils import MetricList
 from unet.metrics import jaccard_index, f1_score, LogNLLLoss
-from unet.dataset import Transform2D, ImageToImage2D, Image2D
+from unet.dataset import JointTransform2D, ImageToImage2D, Image2D
 
 parser = ArgumentParser()
 parser.add_argument('--train_dataset', required=True, type=str)
@@ -34,8 +34,8 @@ if args.crop is not None:
 else:
     crop = None
 
-tf_train = Transform2D(crop=crop, p_flip=0.5, color_jitter_params=None, long_mask=True)
-tf_val = Transform2D(crop=crop, p_flip=0, color_jitter_params=None, long_mask=True)
+tf_train = JointTransform2D(crop=crop, p_flip=0.5, color_jitter_params=None, long_mask=True)
+tf_val = JointTransform2D(crop=crop, p_flip=0, color_jitter_params=None, long_mask=True)
 train_dataset = ImageToImage2D(args.train_dataset, tf_val)
 val_dataset = ImageToImage2D(args.val_dataset, tf_val)
 predict_dataset = Image2D(args.val_dataset)

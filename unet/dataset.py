@@ -32,7 +32,8 @@ def correct_dims(*images):
         return corr_images
 
 
-class Transform2D:
+class JointTransform2D:
+
     def __init__(self, crop=(256, 256), p_flip=0.5, color_jitter_params=(0.1, 0.1, 0.1, 0.1),
                  p_random_affine=0, normalize=False, long_mask=False):
         self.crop = crop
