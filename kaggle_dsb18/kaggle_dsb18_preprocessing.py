@@ -5,7 +5,26 @@ from skimage import io
 from shutil import copy
 from argparse import ArgumentParser
 
-from unet.utils import chk_mkdir
+
+# I would like to take a minute to express that relative imports in Python are horrible.
+# Although this function is implemented somewhere else, it cannot be imported, since its
+# folder is in the parent folder of this. Relative imports result in ValueErrors. The
+# design choice behind this decision eludes me. The only way to circumvent this is either
+# make this package installable, add the parent folder to PATH or implement it again.
+# I went with the latter one.
+#
+# If you are reading this and you also hate the relative imports in Python, cheers!
+# You are not alone.
+def chk_mkdir(*paths: Container) -> None:
+    """
+    Creates folders if they do not exist.
+
+    Args:
+        paths: Container of paths to be created.
+    """
+    for path in paths:
+        if not os.path.exists(path):
+            os.makedirs(path)
 
 
 def merge_masks(masks_folder):
