@@ -33,7 +33,6 @@ def correct_dims(*images):
 
 
 class JointTransform2D:
-
     def __init__(self, crop=(256, 256), p_flip=0.5, color_jitter_params=(0.1, 0.1, 0.1, 0.1),
                  p_random_affine=0, normalize=False, long_mask=False):
         self.crop = crop
@@ -53,8 +52,9 @@ class JointTransform2D:
         if self.crop:
             i, j, h, w = T.RandomCrop.get_params(image, self.crop)
             image, mask = F.crop(image, i, j, h, w), F.crop(mask, i, j, h, w)
-            if np.random.rand() < self.p_flip:
-                image, mask = F.hflip(image), F.hflip(mask)
+
+        if np.random.rand() < self.p_flip:
+            image, mask = F.hflip(image), F.hflip(mask)
 
         # color transforms || ONLY ON IMAGE
         if self.color_jitter_params:
