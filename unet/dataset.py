@@ -113,7 +113,7 @@ class ImageToImage2D(Dataset):
                   |-- ...
 
         joint_transform: augmentation transform, an instance of JointTransform2D. If bool(joint_transform)
-            evaluates to False, torchvision.transforms.ToTensor will be used.
+            evaluates to False, torchvision.transforms.ToTensor will be used on both image and mask.
         one_hot_mask: bool, if True, returns the mask in one-hot encoded form.
     """
 
@@ -155,13 +155,25 @@ class ImageToImage2D(Dataset):
 
 class Image2D(Dataset):
     """
-    Structure of the dataset should be:
+    Reads the images and applies the augmentation transform on them. As opposed to ImageToImage2D, this
+    reads a single image and requires a simple augmentation transform.
+    Usage:
+        1. If used without the unet.model.Model wrapper, an instance of this object should be passed to
+           torch.utils.data.DataLoader. Iterating through this returns the tuple of image and image
+           filename.
+        2. With unet.model.Model wrapper, an instance of this object should be passed as a prediction
+           dataset.
 
-    dataset_path
-      |-- input
-          |-- img001.png
-          |-- img002.png
-          |-- ...
+    Args:
+        dataset_path: path to the dataset. Structure of the dataset should be:
+            dataset_path
+              |-- images
+                  |-- img001.png
+                  |-- img002.png
+                  |-- ...
+
+        transform: augmentation transform. If bool(joint_transform) evaluates to False,
+            torchvision.transforms.ToTensor will be used.
     """
 
     def __init__(self, dataset_path: str, transform: Callable = None):
