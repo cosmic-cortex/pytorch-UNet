@@ -2,6 +2,7 @@
 
 A tunable implementation of [U-Net](https://arxiv.org/abs/1505.04597) in PyTorch.
 
+- [About U-Net](#unet)
 - [U-Net quickstart](#quickstart)
   - [Training](#training)
   - [Predicting](#predicting)
@@ -128,8 +129,13 @@ Optional arguments are:
 - `scheduler`: learning rate scheduler for the optimizer.
 - `device`: The device on which the model and tensor should be located. The default device is the cpu.
 
-To train the model, the `.fit_dataset()` method can be used. For details on how to use it, see its docstring. 
+To train the model, the `.fit_dataset()` method can be used. For details on how to use it, see its docstring.
+To do this, you'll need to use the `unet.dataset.ImageToImage2D` dataset generator, which is described in the
+next section. 
 
 ### Datasets and augmentation transforms<a name="dataset">
+For training the U-Net, simple classes for augmentations and dataset input is implemented. The joint
+augmentation transform for image and mask is implemented in `unet.dataset.JointTransform2D`. This transform is
+used by the `unet.dataset.ImageToImage2D`. For more details on their usage, see their corresponding docstrings.  
 
 ## Experiments with U-Net<a name="experiments"></a>
