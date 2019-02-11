@@ -68,6 +68,8 @@ class Model:
         self.net.to(device=self.device)
         try:
             self.loss.to(device=self.device)
+        except:
+            pass
         self.save_model = save_model
 
     def fit_epoch(self, dataset, n_batch=1, shuffle=False):
