@@ -181,7 +181,10 @@ class Image2D(Dataset):
         self.input_path = os.path.join(dataset_path, 'images')
         self.images_list = os.listdir(self.input_path)
 
-        self.transform = transform
+        if transform:
+            self.transform = transform
+        else:
+            self.transform = T.ToTensor()
 
     def __len__(self):
         return len(os.listdir(self.input_path))
@@ -193,9 +196,6 @@ class Image2D(Dataset):
         # correct dimensions if needed
         image = correct_dims(image)
 
-        if self.transform:
-            image = self.transform(image)
-        else:
-            image = T.ToTensor()(image)
+        image = self.transform(image)
 
         return image, image_filename
