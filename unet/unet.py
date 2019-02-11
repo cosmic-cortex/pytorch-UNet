@@ -6,7 +6,7 @@ from .blocks import *
 
 
 class UNet2D(nn.Module):
-    def __init__(self, in_channels, out_channels, conv_depths=[64, 128, 256, 512, 1024]):
+    def __init__(self, in_channels, out_channels, conv_depths=(64, 128, 256, 512, 1024)):
         assert len(conv_depths) > 2, 'conv_depths must have at least 3 members'
 
         super(UNet2D, self).__init__()
@@ -49,7 +49,7 @@ class UNet2D(nn.Module):
 
 
 class UNet3D(nn.Module):
-    def __init__(self, in_channels, out_channels, conv_depths=[64, 128, 256, 512, 1024]):
+    def __init__(self, in_channels, out_channels, conv_depths=(64, 128, 256, 512, 1024)):
         assert len(conv_depths) > 2, 'conv_depths must have at least 3 members'
 
         super(UNet3D, self).__init__()
@@ -106,11 +106,3 @@ def pad_to_shape(this, shp):
     elif len(shp) == 5:
         pad = (0, shp[4] - this.shape[4], 0, shp[3] - this.shape[3], 0, shp[2] - this.shape[2])
     return F.pad(this, pad)
-
-
-if __name__ == '__main__':
-    device = torch.device('cuda:1')
-    unet = UNet3D(3, 2, conv_depths=[10, 20, 30, 40]).to(device)
-    x = torch.rand(1, 3, 128, 128, 128).to(device)
-    y = unet(x)
-    print(y.shape)
