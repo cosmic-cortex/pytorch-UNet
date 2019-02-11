@@ -3,8 +3,13 @@
 A tunable implementation of [U-Net](https://arxiv.org/abs/1505.04597) in PyTorch.
 
 - [U-Net quickstart](#quickstart)
+  - [Training](#training)
+  - [Predicting](#predicting)
 - [Customizing the network](#customizing)
-- [How to use](#usage)
+  - [The UNet2D object](#unet2d)
+- [Utilities for training the model](#utilities)
+  - [Wrapper for training and inference](#wrapper)
+  - [Datasets and augmentation transforms](#dataset)
 - [Experiments with U-Net](#experiments)
 
 ## About U-Net<a name="unet"></a>
@@ -12,7 +17,7 @@ A tunable implementation of [U-Net](https://arxiv.org/abs/1505.04597) in PyTorch
 <p align="middle">
   <img src="https://lmb.informatik.uni-freiburg.de/people/ronneber/u-net/u-net-architecture.png" width="500" align="middle"/>
 </p>  
-U-Net is a powerful encoder-decoder CNN architecture for semantic segmentation, developed by Olaf Ronneberger, 
+[U-Net](https://arxiv.org/abs/1505.04597) is a powerful encoder-decoder CNN architecture for semantic segmentation, developed by Olaf Ronneberger, 
 Philipp Fischer and Thomas Brox. It has won several competitions, for example the ISBI Cell Tracking Challenge 2015 or
 the Kaggle Data Science Bowl 2018.   
 
@@ -36,6 +41,8 @@ and pooling layers. With this implementation, you can build your U-Net using the
 ## U-Net quickstart<a name="quickstart"></a>
 
 The simplest way to use the implemented U-Net is with the provided `train.py` and `predict.py` scripts.  
+
+### Training<a name="training"></a>
 For training, `train.py` should be used, where the required arguments are
 - `--train_dataset`: path to the training dataset which should be structured like
 ```
@@ -75,6 +82,54 @@ the model at all, only the logs.
 Defaults to None, which results in no cropping. For example, if set to 256, the model is trained and
 valdiated on (256, 256) sized random crops. 
 
+### Predicting<a name="predicting"></a>
+For prediction, the `predict.py` script should be used, where the required arguments are
+- `--dataset`: path to the dataset for which you would like to save the predictions.
+- `--results_path`: path to the folder where you wish to save the images.
+- `--model_path`: path to the saved model which you would like to use for inference.
+Optional arguments:
+- `--device`: the device where you wish to perform training and inference. Possible values are 'cpu',
+'cuda:0', 'cuda:1', etc. Defaults for 'cpu'.
+
 ## Customizing the network<a name="customizing"></a>
+As you can see on [this figure](https://lmb.informatik.uni-freiburg.de/people/ronneber/u-net/u-net-architecture.png),
+the U-Net architecture is basically made from convolution blocks. In the original architecture, the flow
+looks like  
+<p align="middle">
+  1 → 64 → 128 → 256 → 512 → 1024 (channels)<br>
+  1024 → 512 → 256 → 128 → 64 → 1 (channels).
+</p>  
+This is quite arbitrary and it might not be the best architecture for your problem. With the implementation
+provided in this repository, this can be changed quickly without requiring you to tweak the code, as you'll
+see in the next section.
+
+### The UNet2D object<a name="unet2d"></a>
+The 2D [U-Net](https://arxiv.org/abs/1505.04597) architecture is implemented by the `unet.unet.UNet2D`
+class. It accepts the following arguments during initialization:
+- `in_channels`: the number of channels in your images. (Required)
+- `out_channels`: the number of classes in your images. (Required)
+- `conv_depths`: a list describing the number of filters learned by the consecutive convolutional blocks.
+For example, the original architecture outlined above can be described as `[64, 128, 256, 512, 1024]`.
+The argument defaults to this structure.
+
+## Utilities for training the model<a name="utilities"></a>
+To save time with writing the usual boilerplate PyTorch code for training, a dataset generator and a
+simple wrapper is provided.  
+
+### Wrapper for training and inference<a name="wrapper"></a>
+The wrapper is implemented in the `unet.model.Model` object. Upon initialization, you are required to
+provide the following arguments:
+- `net`: PyTorch model.
+- `loss`: loss function which you would like to use during training.
+- `optimizer`: optimizer for the training.
+- `checkpoint_folder`: folder for saving the results and predictions.
+
+Optional arguments are:
+- `scheduler`: learning rate scheduler for the optimizer.
+- `device`: The device on which the model and tensor should be located. The default device is the cpu.
+
+To train the model, the `.fit_dataset()` method can be used. For details on how to use it, see its docstring. 
+
+### Datasets and augmentation transforms<a name="dataset">
 
 ## Experiments with U-Net<a name="experiments"></a>
