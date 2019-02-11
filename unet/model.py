@@ -32,8 +32,7 @@ class Model:
     """
     def __init__(self, net: nn.Module, loss, optimizer, checkpoint_folder: str,
                  scheduler: torch.optim.lr_scheduler._LRScheduler = None,
-                 device: torch.device = torch.device('cpu'),
-                 save_model: bool = False):
+                 device: torch.device = torch.device('cpu')):
         """
         Wrapper for PyTorch models.
 
@@ -70,7 +69,6 @@ class Model:
             self.loss.to(device=self.device)
         except:
             pass
-        self.save_model = save_model
 
     def fit_epoch(self, dataset, n_batch=1, shuffle=False):
         """
@@ -148,8 +146,9 @@ class Model:
         return logs
 
     def fit_dataset(self, dataset: ImageToImage2D, n_epochs: int, n_batch: int = 1, shuffle: bool = False,
-                    val_dataset: ImageToImage2D = None, save_freq: int = 100, predict_dataset: Image2D = None,
-                    metric_list: MetricList = MetricList({}), verbose: bool = False):
+                    val_dataset: ImageToImage2D = None, save_freq: int = 100, save_model: bool = False,
+                    predict_dataset: Image2D = None, metric_list: MetricList = MetricList({}),
+                    verbose: bool = False):
 
         """
         Training loop for the network.
@@ -160,6 +159,8 @@ class Model:
             shuffle: bool indicating whether or not suffle the dataset during training
             val_dataset: validation dataset, instance of unet.dataset.ImageToImage2D (optional)
             save_freq: frequency of saving the model and predictions from predict_dataset
+            save_model: bool indicating whether or not you wish to save the model itself
+                (useful for saving space)
             predict_dataset: images to be predicted and saved during epochs determined
                 by save_freq, instance of unet.dataset.Image2D (optional)
             n_batch: size of batch during training
@@ -193,7 +194,7 @@ class Model:
             else:
                 loss = train_logs['train_loss']
 
-            if self.save_model:
+            if save_model:
                 # saving best model
                 if loss < min_loss:
                     torch.save(self.net, os.path.join(self.checkpoint_folder, 'best_model.pt'))
