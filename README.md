@@ -12,6 +12,7 @@ A tunable implementation of [U-Net](https://arxiv.org/abs/1505.04597) in PyTorch
   - [Wrapper for training and inference](#wrapper)
   - [Datasets and augmentation transforms](#dataset)
 - [Experiments with U-Net](#experiments)
+  - [The Kaggle Data Science Bowl 2018 nuclei detection challenge dataset](#dataset)
 
 ## About U-Net<a name="unet"></a>
 
@@ -139,3 +140,25 @@ augmentation transform for image and mask is implemented in `unet.dataset.JointT
 used by the `unet.dataset.ImageToImage2D`. For more details on their usage, see their corresponding docstrings.  
 
 ## Experiments with U-Net<a name="experiments"></a>
+To get a good grip on U-Net and how it depends on hyperparameters, I have made a simple experiment using the
+dataset from the Kaggle Data Science Bowl 2018, which aims to find cell nuclei in microscopy images. Although
+the goal of the competition was instance based segmentation which is not exactly the proper use of U-Net, it
+actually won the race with some really clever tricks. (For details, see 
+[this post by the winner team](https://www.kaggle.com/c/data-science-bowl-2018/discussion/54741), explaining
+what they did in detail.)  
+
+For simplicity, the following experiments are focused on a simplified problem: segmenting out nuclei from the
+background, disregarding the differences between instances of nuclei.   
+
+### The Kaggle Data Science Bowl 2018 nuclei detection challenge dataset<a name="dataset"></a>
+If you would like to play around with the data, you can
+[download the images from here](https://www.kaggle.com/c/data-science-bowl-2018/data). Since the ground truth
+masks are given for each instance, we need some preprocessing. This can be done with the provided script
+`kaggle_dsb18_preprocessing.py`, in the `kaggle_dsb18` folder. It requires two arguments:
+- `--dataset_path`: path to the downloaded dataset.
+- `--export_path`: path to the folder where you wish to save the results.
+
+The images in this dataset can be subdivided further: fluorescent images, brightfield images and histopathological
+images containing tissue. If you also want to make this split, you can find the corresponding image names
+in the `kaggle_dsb18` folder.   
+
