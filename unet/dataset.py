@@ -33,6 +33,22 @@ def correct_dims(*images):
 
 
 class JointTransform2D:
+    """
+    Performs augmentation on image and mask when called. Due to the randomness of augmentation transforms,
+    it is not enough to simply apply the same Transform from torchvision on the image and mask separetely.
+    Doing this will result in messing up the ground truth mask. To circumvent this problem, this class can
+    be used, which will take care of the problems above.
+
+    Args:
+        crop: tuple describing the size of the random crop. If bool(crop) evaluates to False, no crop will
+            be taken.
+        p_flip: float, the probability of performing a random horizontal flip.
+        color_jitter_params: tuple describing the parameters of torchvision.transforms.ColorJitter.
+            If bool(color_jitter_params) evaluates to false, no color jitter transformation will be used.
+        p_random_affine: float, the probability of performing a random affine transform using
+            torchvision.transforms.RandomAffine.
+        long_mask: bool, if True, returns the mask as LongTensor in label-encoded format.
+    """
     def __init__(self, crop=(256, 256), p_flip=0.5, color_jitter_params=(0.1, 0.1, 0.1, 0.1),
                  p_random_affine=0, long_mask=False):
         self.crop = crop
@@ -76,18 +92,29 @@ class JointTransform2D:
 
 class ImageToImage2D(Dataset):
     """
-    Structure of the dataset should be:
+    Reads the images and applies the augmentation transform on them.
+    Usage:
+        1. If used without the unet.model.Model wrapper, an instance of this object should be passed to
+           torch.utils.data.DataLoader. Iterating through this returns the tuple of image, mask and image
+           filename.
+        2. With unet.model.Model wrapper, an instance of this object should be passed as train or validation
+           datasets.
 
-    dataset_path
-      |-- images
-          |-- img001.png
-          |-- img002.png
-          |-- ...
-      |-- masks
-          |-- img001.png
-          |-- img002.png
-          |-- ...
+    Args:
+        dataset_path: path to the dataset. Structure of the dataset should be:
+            dataset_path
+              |-- images
+                  |-- img001.png
+                  |-- img002.png
+                  |-- ...
+              |-- masks
+                  |-- img001.png
+                  |-- img002.png
+                  |-- ...
 
+        joint_transform: augmentation transform, an instance of JointTransform2D. If bool(joint_transform)
+            evaluates to False, torchvision.transforms.ToTensor will be used.
+        one_hot_mask: bool, if True, returns the mask in one-hot encoded form.
     """
 
     def __init__(self, dataset_path: str, joint_transform: Callable = None, one_hot_mask: int = False) -> None:
