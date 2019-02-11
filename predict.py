@@ -6,7 +6,7 @@ from unet.model import Model
 from unet.dataset import Image2D
 
 parser = ArgumentParser()
-parser.add_argument('--dataset', type=str)
+parser.add_argument('--dataset', required=True, type=str)
 parser.add_argument('--results_path', required=True, type=str)
 parser.add_argument('--model_path', required=True, type=str)
 parser.add_argument('--device', default='cpu', type=str)
