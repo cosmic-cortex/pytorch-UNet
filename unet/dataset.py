@@ -34,14 +34,13 @@ def correct_dims(*images):
 
 class JointTransform2D:
     def __init__(self, crop=(256, 256), p_flip=0.5, color_jitter_params=(0.1, 0.1, 0.1, 0.1),
-                 p_random_affine=0, normalize=False, long_mask=False):
+                 p_random_affine=0, long_mask=False):
         self.crop = crop
         self.p_flip = p_flip
         self.color_jitter_params = color_jitter_params
         if color_jitter_params:
             self.color_tf = T.ColorJitter(*color_jitter_params)
         self.p_random_affine = p_random_affine
-        self.normalize = normalize
         self.long_mask = long_mask
 
     def __call__(self, image, mask):
@@ -71,10 +70,6 @@ class JointTransform2D:
             mask = F.to_tensor(mask)
         else:
             mask = to_long_tensor(mask)
-
-        # normalizing image
-        if self.normalize:
-            image = tf_normalize(image)
 
         return image, mask
 
