@@ -49,9 +49,8 @@ results_folder = os.path.join(args.checkpoint_path, args.model_name)
 if not os.path.exists(results_folder):
     os.makedirs(results_folder)
 
-weights = [0.0, 1.0]
-metric_list = MetricList({'jaccard': partial(jaccard_index, weights=weights),
-                          'f1': partial(f1_score, weights=weights)})
+metric_list = MetricList({'jaccard': partial(jaccard_index),
+                          'f1': partial(f1_score)})
 
 model = Model(unet, loss, optimizer, results_folder, device=args.device)
 
