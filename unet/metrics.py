@@ -52,8 +52,9 @@ def classwise_f1(output, gt):
 
     precision = (true_positives + epsilon) / (selected + epsilon)
     recall = (true_positives + epsilon) / (relevant + epsilon)
+    classwise_f1 = 2 * (precision * recall) / (precision + recall)
 
-    return 2 * (precision * recall) / (precision + recall)
+    return classwise_f1
 
 
 def make_weighted_metric(classwise_metric):
@@ -72,6 +73,8 @@ def make_weighted_metric(classwise_metric):
             weights = torch.ones(output.shape[1]) / output.shape[1]
         else:
             # creating tensor if needed
+            if len(weights) != output.shape[1]:
+                raise ValueError("The number of weights must match with the number of classes")
             if not isinstance(weights, torch.Tensor):
                 weights = torch.tensor(weights)
             # normalizing weights
