@@ -5,8 +5,8 @@ import torch
 from skimage import io
 
 from torch.utils.data import Dataset
-from torchvision import transforms as T
-from torchvision.transforms import functional as F
+
+from albumentations.pytorch import ToTensor
 
 from typing import Callable
 
@@ -32,64 +32,6 @@ def correct_dims(*images):
         return corr_images
 
 
-class JointTransform2D:
-    """
-    Performs augmentation on image and mask when called. Due to the randomness of augmentation transforms,
-    it is not enough to simply apply the same Transform from torchvision on the image and mask separetely.
-    Doing this will result in messing up the ground truth mask. To circumvent this problem, this class can
-    be used, which will take care of the problems above.
-
-    Args:
-        crop: tuple describing the size of the random crop. If bool(crop) evaluates to False, no crop will
-            be taken.
-        p_flip: float, the probability of performing a random horizontal flip.
-        color_jitter_params: tuple describing the parameters of torchvision.transforms.ColorJitter.
-            If bool(color_jitter_params) evaluates to false, no color jitter transformation will be used.
-        p_random_affine: float, the probability of performing a random affine transform using
-            torchvision.transforms.RandomAffine.
-        long_mask: bool, if True, returns the mask as LongTensor in label-encoded format.
-    """
-    def __init__(self, crop=(256, 256), p_flip=0.5, color_jitter_params=(0.1, 0.1, 0.1, 0.1),
-                 p_random_affine=0, long_mask=False):
-        self.crop = crop
-        self.p_flip = p_flip
-        self.color_jitter_params = color_jitter_params
-        if color_jitter_params:
-            self.color_tf = T.ColorJitter(*color_jitter_params)
-        self.p_random_affine = p_random_affine
-        self.long_mask = long_mask
-
-    def __call__(self, image, mask):
-        # transforming to PIL image
-        image, mask = F.to_pil_image(image), F.to_pil_image(mask)
-
-        # random crop
-        if self.crop:
-            i, j, h, w = T.RandomCrop.get_params(image, self.crop)
-            image, mask = F.crop(image, i, j, h, w), F.crop(mask, i, j, h, w)
-
-        if np.random.rand() < self.p_flip:
-            image, mask = F.hflip(image), F.hflip(mask)
-
-        # color transforms || ONLY ON IMAGE
-        if self.color_jitter_params:
-            image = self.color_tf(image)
-
-        # random affine transform
-        if np.random.rand() < self.p_random_affine:
-            affine_params = T.RandomAffine(180).get_params((-90, 90), (1, 1), (2, 2), (-45, 45), self.crop)
-            image, mask = F.affine(image, *affine_params), F.affine(mask, *affine_params)
-
-        # transforming to tensor
-        image = F.to_tensor(image)
-        if not self.long_mask:
-            mask = F.to_tensor(mask)
-        else:
-            mask = to_long_tensor(mask)
-
-        return image, mask
-
-
 class ImageToImage2D(Dataset):
     """
     Reads the images and applies the augmentation transform on them.
@@ -112,23 +54,24 @@ class ImageToImage2D(Dataset):
                   |-- img002.png
                   |-- ...
 
-        joint_transform: augmentation transform, an instance of JointTransform2D. If bool(joint_transform)
+        aug: augmentation transform from albumentations. If bool(joint_transform)
             evaluates to False, torchvision.transforms.ToTensor will be used on both image and mask.
         one_hot_mask: bool, if True, returns the mask in one-hot encoded form.
     """
 
-    def __init__(self, dataset_path: str, joint_transform: Callable = None, one_hot_mask: int = False) -> None:
+    def __init__(self, dataset_path: str, aug: Callable = None, one_hot_mask: int = False,
+                 long_mask: bool = False) -> None:
         self.dataset_path = dataset_path
         self.input_path = os.path.join(dataset_path, 'images')
         self.output_path = os.path.join(dataset_path, 'masks')
         self.images_list = os.listdir(self.input_path)
         self.one_hot_mask = one_hot_mask
+        self.long_mask = long_mask
 
-        if joint_transform:
-            self.joint_transform = joint_transform
+        if aug:
+            self.aug = aug
         else:
-            to_tensor = T.ToTensor()
-            self.joint_transform = lambda x, y: (to_tensor(x), to_tensor(y))
+            self.aug = ToTensor()
 
     def __len__(self):
         return len(os.listdir(self.input_path))
@@ -143,8 +86,13 @@ class ImageToImage2D(Dataset):
         # correct dimensions if needed
         image, mask = correct_dims(image, mask)
 
-        if self.joint_transform:
-            image, mask = self.joint_transform(image, mask)
+        if self.aug:
+            augmented = self.aug(image=image, mask=mask)
+            image, mask = augmented['image'], augmented['mask']
+
+        if self.long_mask:
+            # convert mask dtype to long and getting rid of extra dimension
+            mask = torch.squeeze(mask.long())
 
         if self.one_hot_mask:
             assert self.one_hot_mask > 0, 'one_hot_mask must be nonnegative'
@@ -176,15 +124,15 @@ class Image2D(Dataset):
             torchvision.transforms.ToTensor will be used.
     """
 
-    def __init__(self, dataset_path: str, transform: Callable = None):
+    def __init__(self, dataset_path: str, aug: Callable = None):
         self.dataset_path = dataset_path
         self.input_path = os.path.join(dataset_path, 'images')
         self.images_list = os.listdir(self.input_path)
 
-        if transform:
-            self.transform = transform
+        if aug:
+            self.aug = aug
         else:
-            self.transform = T.ToTensor()
+            self.aug = ToTensor()
 
     def __len__(self):
         return len(os.listdir(self.input_path))
@@ -196,6 +144,6 @@ class Image2D(Dataset):
         # correct dimensions if needed
         image = correct_dims(image)
 
-        image = self.transform(image)
+        image = self.aug(image=image)['image']
 
         return image, image_filename

@@ -2,6 +2,10 @@ import os
 
 import torch.optim as optim
 
+from albumentations import PadIfNeeded, RandomCrop, HorizontalFlip, VerticalFlip, \
+                           RandomBrightnessContrast, Compose
+from albumentations.pytorch import ToTensor
+
 from functools import partial
 from argparse import ArgumentParser
 
@@ -9,7 +13,7 @@ from unet.unet import UNet2D
 from unet.model import Model
 from unet.utils import MetricList
 from unet.metrics import jaccard_index, f1_score, LogNLLLoss
-from unet.dataset import JointTransform2D, ImageToImage2D, Image2D
+from unet.dataset import ImageToImage2D, Image2D
 
 parser = ArgumentParser()
 parser.add_argument('--train_dataset', required=True, type=str)
@@ -29,15 +33,16 @@ parser.add_argument('--learning_rate', type=float, default=1e-3)
 parser.add_argument('--crop', type=int, default=None)
 args = parser.parse_args()
 
-if args.crop is not None:
-    crop = (args.crop, args.crop)
+# create the augmentation transform
+if args.crop is None:
+    aug_train = Compose([PadIfNeeded(256, 256), HorizontalFlip(), VerticalFlip(),
+                         RandomBrightnessContrast(), ToTensor(num_classes=args.out_channels)])
 else:
-    crop = None
+    aug_train = Compose([PadIfNeeded(256, 256), RandomCrop(args.crop, args.crop), HorizontalFlip(),
+                         VerticalFlip(), RandomBrightnessContrast(), ToTensor(num_classes=args.out_channels)])
 
-tf_train = JointTransform2D(crop=crop, p_flip=0.5, color_jitter_params=None, long_mask=True)
-tf_val = JointTransform2D(crop=crop, p_flip=0, color_jitter_params=None, long_mask=True)
-train_dataset = ImageToImage2D(args.train_dataset, tf_val)
-val_dataset = ImageToImage2D(args.val_dataset, tf_val)
+train_dataset = ImageToImage2D(args.train_dataset, aug_train, long_mask=True)
+val_dataset = ImageToImage2D(args.val_dataset, long_mask=True)
 predict_dataset = Image2D(args.val_dataset)
 
 conv_depths = [int(args.width*(2**k)) for k in range(args.depth)]
