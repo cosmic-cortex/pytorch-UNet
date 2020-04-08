@@ -1,7 +1,7 @@
 import os
 import numpy as np
 
-from skimage import io
+from skimage import io, img_as_ubyte
 
 from shutil import copy
 from collections import Container
@@ -38,7 +38,7 @@ def merge_masks(masks_folder):
     merged_mask = np.sum(masks, axis=0)
     merged_mask[merged_mask > 0] = 1
 
-    return merged_mask
+    return img_as_ubyte(merged_mask)
 
 
 if __name__ == '__main__':
