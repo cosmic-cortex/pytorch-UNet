@@ -21,7 +21,7 @@ class UNet2D(nn.Module):
         decoder_layers = []
         decoder_layers.extend([Decoder2D(2 * conv_depths[i + 1], 2 * conv_depths[i], 2 * conv_depths[i], conv_depths[i])
                                for i in reversed(range(len(conv_depths)-2))])
-        decoder_layers.append(Last2D(conv_depths[1], conv_depths[0], out_channels))
+        decoder_layers.append(Last2D(2*conv_depths[0], conv_depths[0], out_channels))
 
         # encoder, center and decoder layers
         self.encoder_layers = nn.Sequential(*encoder_layers)
